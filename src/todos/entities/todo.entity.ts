@@ -7,6 +7,7 @@ export class Todo {
   description: string;
   status: TodoStatus;
   priority: TodoPriority;
+  userId: number;
   categoryId?: number;
   createAt: Date;
   updateAt: Date;

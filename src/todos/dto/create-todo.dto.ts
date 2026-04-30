@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsEnum,
   IsInt,
@@ -33,4 +32,7 @@ export class CreateTodoDto {
   @IsOptional()
   @IsInt({ message: 'Category ID must be an integer' })
   categoryId?: number;
+
+  @IsInt({ message: 'User ID must be an integer' })
+  userId!: number;
 }

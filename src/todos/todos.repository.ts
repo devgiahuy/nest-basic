@@ -35,6 +35,13 @@ export class TodosRepository {
     return todos.find((todo) => todo.id === id);
   }
 
+  findByTitle(title: string): Todo | undefined {
+    const todos = this.readFromFile();
+    return todos.find((todo) =>
+      todo.title.toLowerCase().includes(title.toLowerCase()),
+    );
+  }
+
   create(CreateTodoDto: CreateTodoDto): Todo {
     const todos = this.readFromFile();
     const newTodo: Todo = {
@@ -44,6 +51,7 @@ export class TodosRepository {
       status: CreateTodoDto.status || TodoStatus.OPEN,
       priority: CreateTodoDto.priority || TodoPriority.MEDIUM,
       categoryId: CreateTodoDto.categoryId,
+      userId: CreateTodoDto.userId,
       createAt: new Date(),
       updateAt: new Date(),
     };

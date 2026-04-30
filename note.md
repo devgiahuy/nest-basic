@@ -15,7 +15,14 @@ CHECK VALIDITY:
 Entity: đối tượng đại diện cho một bảng trong db, có thể gọi là model, schema(mongoose)
 
 - CLI:
+  nest g module todos
+  nest g co todos --no-spec
+  nest g s todos --no-spec
+  nest g repository todos --no-spec --flat
+  --flat: tạo file trong thư mục hiện tại, không tạo thêm thư mục con.
+
   nest g class todos/dto/create-todo.dto --no-spec
+  nest g resource categories --no-spec
 
 - LB:
   - npm add class-transformer class-validator
@@ -55,3 +62,19 @@ cách sử dụng:
 - import: là một mảng chứa các module khác mà module hiện tại phụ thuộc vào. Khi một module được import vào một module khác, tất cả các provider và controller của module đó sẽ được cung cấp cho module hiện tại thông qua cơ chế dependency injection (DI). Điều này cho phép các thành phần của module hiện tại có thể sử dụng các provider và controller của module được import mà không cần phải tự tạo instance của chúng.
 
 instance: là một đối tượng được tạo ra từ một class, chứa các thuộc tính và phương thức của class đó. Trong NestJS, khi một class được đánh dấu bằng @Injectable() và được đăng ký trong providers của một module, NestJS sẽ tự động tạo instance của class đó và cung cấp nó cho các thành phần khác của ứng dụng thông qua cơ chế dependency injection (DI). Instance này sẽ được quản lý vòng đời bởi NestJS, có nghĩa là nó sẽ được tạo ra khi cần thiết và bị hủy khi không còn sử dụng nữa.
+
+module architecture: là một cách tổ chức mã nguồn trong NestJS, trong đó các thành phần của ứng dụng được chia thành các module riêng biệt, mỗi module có trách nhiệm quản lý một phần cụ thể của ứng dụng. Mỗi module có thể chứa các controller, service, provider và các thành phần khác liên quan đến chức năng của module đó. Module architecture giúp tăng tính modularity và dễ bảo trì của mã nguồn, cho phép các nhà phát triển dễ dàng quản lý và mở rộng ứng dụng theo từng phần cụ thể.
+![alt text](image-6.png)
+
+- Encapsulation, imports, exports:
+  khi muốn sử dụng service của module khác thì phải export service đó trong module chứa service đó, sau đó import nguyên module vào module muốn sử dụng service đó.
+  Encapsulation ở cấp module có nghĩa là các thành phần của module chỉ có thể sử dụng các thành phần được export bởi module đó, không thể truy cập trực tiếp vào các thành phần khác của module. Điều này giúp bảo vệ tính toàn vẹn của module và giảm sự phụ thuộc giữa các module, giúp tăng tính modularity và dễ bảo trì của mã nguồn.
+  VÍ DỤ: khi 1 module A có nhiều service, nhưng chỉ muốn export 1 service để các module khác sử dụng, thì chỉ cần export service đó trong module A, các service còn lại sẽ không được export và không thể truy cập trực tiếp từ các module khác.
+
+- ERROR:
+  BadRequestException: bad request status code 400 client gửi dữ liệu không hợp lệ
+  UnauthorizedException: unauthorized status code 401 lỗi do client không có quyền truy cập
+  ForbiddenException: forbidden status code 403 lỗi do client đã đăng nhập nhưng không có quyền truy cập vào tài nguyên
+  NotFoundException: not found status code 404 lỗi do tài nguyên không tồn tại
+  ConflictException: conflict status code 409 lỗi do xung đột dữ liệu, ví dụ khi tạo một tài khoản (username/email) đã tồn tại
+  InternalServerErrorException: internal server error status code 500 lỗi do server

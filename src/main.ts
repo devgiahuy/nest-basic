@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,8 @@ async function bootstrap() {
       // cho phép chuyển đổi kiểu dữ liệu một cách ngầm định (ví dụ: "123" thành 123)
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter()); // áp dụng filter toàn cục để bắt và xử lý các lỗi HTTP
 
   await app.listen(process.env.PORT ?? 3000);
 }
