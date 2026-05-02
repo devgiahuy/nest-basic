@@ -8,35 +8,42 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { QueryParamsDto } from './dto/query-params.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { Todo } from './entities/todo.entity';
-import { TodosRepository } from './todos.repository';
 import { UsersService } from 'src/users/users.service';
 import { TodoNotFoundException } from './exceptions/todo-not-found.exception';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TodosService {
   constructor(
-    private readonly todosRepository: TodosRepository,
+    @InjectRepository(Todo) // inject repository của TypeORM vào service để có thể sử dụng các phương thức của repository
+    private readonly todosRepository: Repository<Todo>,
     private readonly categoriesService: CategoriesService,
     private readonly usersService: UsersService,
   ) {}
 
-  findAll(queryParamsDto: QueryParamsDto): Todo[] {
-    let todos = this.todosRepository.findAll();
+  // readonly là đã inject vào rồi thì không thể gán lại được nữa
 
-    if (queryParamsDto.priority) {
-      todos = todos.filter((todo) => todo.priority === queryParamsDto.priority);
-    }
-
+  async findAll(queryParamsDto: QueryParamsDto): Promise<Todo[]> {
     const page = queryParamsDto.page || 1;
     const limit = queryParamsDto.limit || 10;
-
     const start = (page - 1) * limit;
 
-    return todos.slice(start, start + limit);
+    const where = queryParamsDto.priority
+      ? { priority: queryParamsDto.priority }
+      : {};
+
+    const todos = await this.todosRepository.find({
+      where: where,
+      take: limit,
+      skip: start,
+    });
+
+    return todos;
   }
 
-  findById(id: number) {
-    const todo = this.todosRepository.findById(id);
+  async findById(id: number): Promise<Todo> {
+    const todo = await this.todosRepository.findOne({ where: { id } });
 
     if (!todo) {
       // throw new HttpException(
@@ -49,7 +56,7 @@ export class TodosService {
     return todo;
   }
 
-  create(createTodoDto: CreateTodoDto): Todo {
+  async create(createTodoDto: CreateTodoDto): Promise<Todo> {
     const user = this.usersService.findById(createTodoDto.userId);
     if (!user) {
       throw new NotFoundException({
@@ -72,7 +79,9 @@ export class TodosService {
       }
     }
 
-    const existingTodo = this.todosRepository.findByTitle(createTodoDto.title);
+    const existingTodo = await this.todosRepository.findOne({
+      where: { title: createTodoDto.title },
+    });
     if (existingTodo) {
       // throw new BadRequestException(
       //   `Đã tồn tại todo với tiêu đề: ${createTodoDto.title}`,
@@ -86,23 +95,27 @@ export class TodosService {
       // khi truyền 1 obj nó sẽ thay thế hoàn toàn message của BadRequestException
     }
 
-    return this.todosRepository.create(createTodoDto);
+    return this.todosRepository.save(createTodoDto);
   }
 
-  update(id: number, updateTodoDto: UpdateTodoDto) {
-    const updateTodo = this.todosRepository.update(id, updateTodoDto);
-
-    if (!updateTodo) {
+  async update(id: number, updateTodoDto: UpdateTodoDto): Promise<Todo> {
+    const todo = await this.todosRepository.findOne({ where: { id } });
+    if (!todo) {
       throw new TodoNotFoundException(id);
     }
 
-    return updateTodo;
+    Object.assign(todo, updateTodoDto); // copy các thuộc tính từ updateTodoDto đè lên todo
+
+    return this.todosRepository.save(todo);
+    // save ở hàm update sẽ tự động phân biệt được là đang update hay create dựa vào việc
+    //  có id hay không, nếu có id thì sẽ update, nếu không có id thì sẽ tạo mới
   }
 
-  delete(id: number) {
-    const deleted = this.todosRepository.delete(id);
-    if (!deleted) {
+  async delete(id: number): Promise<void> {
+    const deleted = await this.todosRepository.delete(id);
+    if (!deleted.affected) {
       throw new TodoNotFoundException(id);
     }
+    //deleted.affected sẽ trả về số lượng bản ghi bị xóa, nếu bằng 0 thì có nghĩa là không tìm thấy todo để xóa nên sẽ ném ra lỗi NotFoundException
   }
 }
