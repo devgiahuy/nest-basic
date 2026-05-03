@@ -42,6 +42,7 @@ export class Todo {
   user!: User;
 
   @Column({ nullable: true })
+  @Index('idx_todo_category_hight', { where: `"priority" = 'HIGH'` }) //tạo index riêng cho categoryId để tối ưu truy vấn lọc theo category
   categoryId?: number;
 
   // sử dụng eager: true là optional vì không phải todo nào cũng có category, nếu có category thì sẽ liên kết với bảng Category thông qua khóa ngoại categoryId

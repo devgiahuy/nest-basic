@@ -192,3 +192,29 @@ Khi nào nên tạo index vào cột:
 - những primary key mặc định đã có index rồi nên không cần tạo index cho cột id nữa
 - những column có tính duy nhất (unique) cũng đã có index rồi nên không cần tạo index cho cột đó nữa
 - ko nên tạo index cho các cột enum/ boolean vì thường có ít giá trị khác nhau nên index sẽ không hiệu quả, thậm chí còn làm chậm truy vấn hơn do phải duy trì index cho các giá trị đó
+
+Câu lệnh query để kiểm tra xem db có sử dụng index hay không:
+`EXPLAIN ANALYZE SELECT * FROM todos WHERE userId = 1;` ![alt text](image-5.png)
+
+- SELECTIVITY & CARDINALITY:
+  - selectivity: bộ chọn lọc là tỷ lệ phần trăm sau khi lọc dữ liệu, selectivity cao có nghĩa là bộ lọc quá ghắt sau khi lọc dữ liệu thì còn lại ít bản ghi, selectivity thấp có nghĩa là bộ lọc quá lỏng sau khi lọc dữ liệu thì còn lại nhiều bản ghi
+  - cardinality: số lượng giá trị duy nhất trong một cột nghĩa là cột này có bao nhiêu giá trị khác nhau, cardinality cao có nghĩa là cột này có nhiều giá trị khác nhau, cardinality thấp có nghĩa là cột này có ít giá trị khác nhau ![alt text](image-6.png)
+    => CỘT CÓ CARDINALITY CAO -> SELECTIVITY CAO -> INDEX HIỆU QUẢ
+    => CỘT CÓ CARDINALITY THẤP -> SELECTIVITY THẤP
+    => QUY TẮC VÀNG: NÊN TẠO INDEX CHO CÁC CỘT CÓ CARDINALITY CAO
+- Tối ưu truy vấn index với những cột có bộ chọn lọc thấp
+- CÁCH 1: sử dụng composite index ví dụ với status là enum có 3 giá trị khác nhau thì cardinality thấp, nhưng nếu kết hợp với cột userId có nhiều giá trị khác nhau thì cardinality sẽ cao hơn, giúp index hiệu quả hơn
+- CÁCH 2: sử dụng partial index (index một phần) chỉ index cho là sử dụng @Index() truyển vào option where để chỉ index cho những bản ghi có status là 'active' ví dụ như sau:
+  @Index('idx_active_status', { where: "status = 'active'" })
+  status: string;
+  => khi truy vấn với điều kiện status = 'active' thì db sẽ sử dụng index này để tối ưu truy vấn, còn khi truy vấn với điều kiện status khác 'active' thì db sẽ không sử dụng index này vì index này chỉ áp dụng cho những bản ghi có status là 'active' nên sẽ không hiệu quả nếu truy vấn với điều kiện khác 'active'
+  => KẾT LUẬN: NÊN SỬ DỤNG COMPOSITE INDEX HOẶC PARTIAL INDEX CHO NHỮNG CỘT CÓ CARDINALITY THẤP ĐỂ TỐI ƯU TRUY VẤN
+  KẾT LUẬN VỀ INDEX: ![alt text](image-7.png)
+
+# MIGRATION:![alt text](image-9.png)
+
+CLI: npm add -D dotenv
+
+SYNCHURONIZE: ![alt text](image-8.png)
+
+LƯU Ý KHI SỬ DỤNG MIGRATION: khi đã run migration rồi thì không nên thay đổi trực tiếp trong entity nữa mà phải tạo migration mới để thay đổi schema của database, nếu thay đổi trực tiếp trong entity mà không tạo migration mới thì sẽ dẫn đến việc schema của database không đồng bộ với entity, gây lỗi khi chạy ứng dụng hoặc khi deploy ứng dụng lên production vì schema của database không đúng với entity nên sẽ không thể truy vấn dữ liệu đúng cách

@@ -15,4 +15,8 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   lastActivity?: Date;
+
+  @Column({ nullable: true })
+  // khi thêm cột mới vào thì nên để nullable: true để tránh lỗi khi chạy ứng dụng với database đã có sẵn dữ liệu, sau đó có thể viết migration để cập nhật dữ liệu cho cột này rồi mới set nullable: false nếu muốn bắt buộc phải có email
+  email!: string;
 }

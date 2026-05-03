@@ -24,7 +24,7 @@ import { Category } from './categories/entities/category.entity';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [Todo, User, Category], // đăng ký entity với TypeORM
-      synchronize: true, // tự động đồng bộ với database với entities trong code
+      synchronize: process.env.NODE_ENV !== 'production', // tự động đồng bộ với database với entities trong code
       logging: true, // bật logging để xem các câu query được thực thi
     }),
   ],
