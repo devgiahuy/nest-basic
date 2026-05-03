@@ -1,15 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TodoNotFoundException } from 'src/todos/exceptions/todo-not-found.exception';
 
 @Injectable()
 export class CategoriesService {
-  private categories: Category[] = [
-    { id: 1, name: 'Việc học' },
-    { id: 2, name: 'Việc nhà' },
-    { id: 3, name: 'Việc làm thêm' },
-  ];
+  constructor(
+    @InjectRepository(Category)
+    private categoriesRepository: Repository<Category>,
+  ) {}
+
+  async findById(id: number) {
+    const category = await this.categoriesRepository.findOne({ where: { id } });
+
+    if (!category) {
+      throw new TodoNotFoundException(id);
+    }
+
+    return category;
+  }
 
   create(createCategoryDto: CreateCategoryDto) {
     return 'This action adds a new category';
@@ -17,16 +29,6 @@ export class CategoriesService {
 
   findAll() {
     return `This action returns all categories`;
-  }
-
-  findOne(id: number): Category {
-    const category = this.categories.find((category) => category.id === id);
-
-    if (!category) {
-      throw new NotFoundException(id);
-    }
-
-    return category;
   }
 
   update(id: number, updateCategoryDto: UpdateCategoryDto) {

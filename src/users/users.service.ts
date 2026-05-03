@@ -1,20 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TodoNotFoundException } from 'src/todos/exceptions/todo-not-found.exception';
 
 @Injectable()
 export class UsersService {
-  private userUsers: User[] = [
-    { id: 1, name: 'An', todos: [] },
-    { id: 2, name: 'Binh', todos: [] },
-  ];
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-  findById(id: number): User {
-    const user = this.userUsers.find((user) => user.id === id);
-
+  async findById(id: number) {
+    const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new NotFoundException(id);
+      throw new TodoNotFoundException(id);
     }
-
     return user;
   }
 }

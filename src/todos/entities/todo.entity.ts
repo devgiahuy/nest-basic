@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -12,6 +13,9 @@ import { TodoStatus } from '../enums/todo-status.enum';
 import { User } from 'src/users/entities/user.entity';
 import { Category } from 'src/categories/entities/category.entity';
 
+@Index(['userId'])
+@Index(['categoryId'])
+@Index(['userId', 'title']) // composite index (index tổ hợp) chỉ hoạt động khi truy vấn có cả userId và title
 @Entity()
 export class Todo {
   @PrimaryGeneratedColumn()
@@ -32,7 +36,7 @@ export class Todo {
   @Column()
   userId!: number;
 
-  @ManyToOne(() => User, (user) => user.todos)
+  @ManyToOne(() => User, (user) => user.todos, { onDelete: 'CASCADE' }) //eager: true để tự động load thông tin user khi load todo
   @JoinColumn({ name: 'userId' }) //tạo khóa ngoại liên kết với bảng User
   //referencedColumnName: 'id' là mặc định, nên có thể bỏ qua nếu trường khóa chính của bảng User là id
   user!: User;
@@ -40,7 +44,8 @@ export class Todo {
   @Column({ nullable: true })
   categoryId?: number;
 
-  @ManyToOne(() => Category, { nullable: true })
+  // sử dụng eager: true là optional vì không phải todo nào cũng có category, nếu có category thì sẽ liên kết với bảng Category thông qua khóa ngoại categoryId
+  @ManyToOne(() => Category, { nullable: true, onDelete: 'SET NULL' }) //nếu category bị xóa thì set categoryId của todo thành null
   @JoinColumn({ name: 'categoryId' })
   category?: Category;
 

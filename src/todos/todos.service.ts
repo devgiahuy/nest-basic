@@ -11,7 +11,8 @@ import { Todo } from './entities/todo.entity';
 import { UsersService } from 'src/users/users.service';
 import { TodoNotFoundException } from './exceptions/todo-not-found.exception';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class TodosService {
@@ -20,6 +21,7 @@ export class TodosService {
     private readonly todosRepository: Repository<Todo>,
     private readonly categoriesService: CategoriesService,
     private readonly usersService: UsersService,
+    private readonly dataSource: DataSource, // sử dụng transaction của TypeORM
   ) {}
 
   // readonly là đã inject vào rồi thì không thể gán lại được nữa
@@ -37,13 +39,17 @@ export class TodosService {
       where: where,
       take: limit,
       skip: start,
+      relations: ['user', 'category'], //tự động join với bảng user và category để lấy thông tin của user và category liên quan đến todo
     });
 
     return todos;
   }
 
   async findById(id: number): Promise<Todo> {
-    const todo = await this.todosRepository.findOne({ where: { id } });
+    const todo = await this.todosRepository.findOne({
+      where: { id },
+      relations: ['user', 'category'],
+    });
 
     if (!todo) {
       // throw new HttpException(
@@ -57,7 +63,7 @@ export class TodosService {
   }
 
   async create(createTodoDto: CreateTodoDto): Promise<Todo> {
-    const user = this.usersService.findById(createTodoDto.userId);
+    const user = await this.usersService.findById(createTodoDto.userId);
     if (!user) {
       throw new NotFoundException({
         message: `Không tìm thấy user với id: ${createTodoDto.userId}`,
@@ -68,7 +74,9 @@ export class TodosService {
     }
 
     if (createTodoDto.categoryId) {
-      const category = this.categoriesService.findOne(createTodoDto.categoryId);
+      const category = await this.categoriesService.findById(
+        createTodoDto.categoryId,
+      );
       if (!category) {
         throw new NotFoundException({
           message: `Không tìm thấy danh mục với id: ${createTodoDto.categoryId}`,
@@ -95,10 +103,34 @@ export class TodosService {
       // khi truyền 1 obj nó sẽ thay thế hoàn toàn message của BadRequestException
     }
 
-    return this.todosRepository.save(createTodoDto);
+    return this.dataSource.transaction(async (manager) => {
+      const saveTodo = await manager.save(Todo, createTodoDto); // tạo mới todo
+
+      await manager.update(
+        User,
+        { id: createTodoDto.userId },
+        { lastActivity: new Date() },
+      ); // cập nhật lastActivity của user khi tạo todo mới
+      // lưu ý: ở đây phải dùng manager để update user trong transaction, không được dùng usersRepository vì nó sẽ không nằm trong transaction
+      // mọi thứ trong transaction đều phải dùng manager để đảm bảo tính toàn vẹn của dữ liệu, nếu dùng repository sẽ không được quản lý bởi transaction
+      // khi dùng manager thì tham số đầu tiên là entity, tham số thứ 2 là điều kiện để tìm bản ghi cần update, tham số thứ 3 là dữ liệu cần update
+      return saveTodo;
+    });
   }
 
   async update(id: number, updateTodoDto: UpdateTodoDto): Promise<Todo> {
+    if (updateTodoDto.categoryId) {
+      const categpory = await this.categoriesService.findById(
+        updateTodoDto.categoryId,
+      );
+
+      if (!categpory) {
+        throw new NotFoundException({
+          message: `Không tìm thấy danh mục với id: ${updateTodoDto.categoryId}`,
+        });
+      }
+    }
+
     const todo = await this.todosRepository.findOne({ where: { id } });
     if (!todo) {
       throw new TodoNotFoundException(id);

@@ -12,4 +12,7 @@ export class User {
   // Thiết lập quan hệ một-nhiều với Todo để xem 1 user có todo nào
   @OneToMany(() => Todo, (todo) => todo.user)
   todos?: Todo[];
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastActivity?: Date;
 }

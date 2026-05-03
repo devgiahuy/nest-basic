@@ -28,7 +28,7 @@ export class CategoriesController {
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.categoriesService.findOne(id);
+    return this.categoriesService.findById(id);
     //(+id); chuyển đổi chuỗi id thành số nguyên trước khi truyền vào phương thức findById
   }
 
