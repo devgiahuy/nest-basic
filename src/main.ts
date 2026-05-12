@@ -1,10 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AuthGuard } from './common/guards/auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // const requestIdMiddleware = new RequestIdMiddleware();
+  // app.use(req, res, next) => requestIdMiddleware.use(req, res, next)); // áp dụng middleware để gán requestId cho mỗi request
+
+  app.useGlobalGuards(new AuthGuard()); // áp dụng guard toàn cục để kiểm tra xác thực cho tất cả các route
 
   app.useGlobalPipes(
     new ValidationPipe({

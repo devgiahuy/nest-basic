@@ -149,13 +149,13 @@ và khởi tạo trong constructor: private dataSource: DataSource
 `private readonly dataSource: DataSource, // sử dụng transaction của TypeORM`
 
 khi sử dụng transaction thì sẽ logic sẽ như bình thường nhưng sẽ thay đổi ở return
-![alt text](image.png)
+![alt text](/Image/image-9.png)
 
 Cách 2: với những trường hợp phức tạp hơn: sử dụng query runner để quản lý transaction, cách này sẽ linh hoạt hơn cách 1 nhưng sẽ phức tạp hơn vì phải quản lý transaction thủ công, phải commit hoặc rollback transaction thủ công, phải release query runner thủ công,... nên chỉ nên sử dụng cách này khi có những logic phức tạp mà cách 1 không thể đáp ứng được.
 lưu ý: lưu ý ko được quên release query runner sau khi sử dụng xong để tránh bị rò rỉ kết nối đến database, nếu quên release sẽ dẫn đến việc hết kết nối đến database
-![alt text](image-1.png) viết thủ công transaction với query runner
-![alt text](image-2.png) có sử lí logic phức tạp hơn
-![alt text](image-3.png)
+![alt text](/Image/image-10.png) viết thủ công transaction với query runner
+![alt text](/Image/image-11.png) có sử lí logic phức tạp hơn
+![alt text](/Image/image-12.png)
 
 Cách 3: decorator @Transaction() của TypeORM
 CLI: `npm add typeorm-transactional`
@@ -173,7 +173,7 @@ Nguyên tắc 1:
 Không phải lúc nào cũng cần transaction, chỉ dùng khi có từ 2 thao tác trở lên đi cùng nhau và cần đảm bảo tính toàn vẹn dữ liệu, nếu chỉ có 1 thao tác thì không cần transaction vì nó đã là một đơn vị nguyên tử rồi, không cần phải bọc thêm transaction nữa.
 
 Nguyên tắc 3: transaction ko giải quyết vấn đề race condition
-![alt text](image-4.png) ví dụ 2 tài khoản cùng chuyển tiền cho 1 tài khảo thứ 3 thì kết quả cuối cùng tài khoản thứ 3 chỉ nhận được 1 khoản tiền thay vì 2 khoản tiền vì transaction chỉ đảm bảo tính toàn vẹn dữ liệu trong một đơn vị công việc, nhưng không giải quyết được vấn đề race condition khi có nhiều đơn vị công việc cùng truy cập và sửa đổi dữ liệu cùng lúc,
+![alt text](/Image/image-13.png) ví dụ 2 tài khoản cùng chuyển tiền cho 1 tài khảo thứ 3 thì kết quả cuối cùng tài khoản thứ 3 chỉ nhận được 1 khoản tiền thay vì 2 khoản tiền vì transaction chỉ đảm bảo tính toàn vẹn dữ liệu trong một đơn vị công việc, nhưng không giải quyết được vấn đề race condition khi có nhiều đơn vị công việc cùng truy cập và sửa đổi dữ liệu cùng lúc,
 => để giải quyết vấn đề này thì cần sử dụng isolation level hoặc locking để kiểm soát chặt hơn
 
 # Tối ưu truy vấn với index:
@@ -194,11 +194,11 @@ Khi nào nên tạo index vào cột:
 - ko nên tạo index cho các cột enum/ boolean vì thường có ít giá trị khác nhau nên index sẽ không hiệu quả, thậm chí còn làm chậm truy vấn hơn do phải duy trì index cho các giá trị đó
 
 Câu lệnh query để kiểm tra xem db có sử dụng index hay không:
-`EXPLAIN ANALYZE SELECT * FROM todos WHERE userId = 1;` ![alt text](image-5.png)
+`EXPLAIN ANALYZE SELECT * FROM todos WHERE userId = 1;` ![alt text](/Image/image-14.png)
 
 - SELECTIVITY & CARDINALITY:
   - selectivity: bộ chọn lọc là tỷ lệ phần trăm sau khi lọc dữ liệu, selectivity cao có nghĩa là bộ lọc quá ghắt sau khi lọc dữ liệu thì còn lại ít bản ghi, selectivity thấp có nghĩa là bộ lọc quá lỏng sau khi lọc dữ liệu thì còn lại nhiều bản ghi
-  - cardinality: số lượng giá trị duy nhất trong một cột nghĩa là cột này có bao nhiêu giá trị khác nhau, cardinality cao có nghĩa là cột này có nhiều giá trị khác nhau, cardinality thấp có nghĩa là cột này có ít giá trị khác nhau ![alt text](image-6.png)
+  - cardinality: số lượng giá trị duy nhất trong một cột nghĩa là cột này có bao nhiêu giá trị khác nhau, cardinality cao có nghĩa là cột này có nhiều giá trị khác nhau, cardinality thấp có nghĩa là cột này có ít giá trị khác nhau ![alt text](/Image/image-15.png)
     => CỘT CÓ CARDINALITY CAO -> SELECTIVITY CAO -> INDEX HIỆU QUẢ
     => CỘT CÓ CARDINALITY THẤP -> SELECTIVITY THẤP
     => QUY TẮC VÀNG: NÊN TẠO INDEX CHO CÁC CỘT CÓ CARDINALITY CAO
@@ -209,12 +209,29 @@ Câu lệnh query để kiểm tra xem db có sử dụng index hay không:
   status: string;
   => khi truy vấn với điều kiện status = 'active' thì db sẽ sử dụng index này để tối ưu truy vấn, còn khi truy vấn với điều kiện status khác 'active' thì db sẽ không sử dụng index này vì index này chỉ áp dụng cho những bản ghi có status là 'active' nên sẽ không hiệu quả nếu truy vấn với điều kiện khác 'active'
   => KẾT LUẬN: NÊN SỬ DỤNG COMPOSITE INDEX HOẶC PARTIAL INDEX CHO NHỮNG CỘT CÓ CARDINALITY THẤP ĐỂ TỐI ƯU TRUY VẤN
-  KẾT LUẬN VỀ INDEX: ![alt text](image-7.png)
+  KẾT LUẬN VỀ INDEX: ![alt text](/Image/image-16.png)
 
-# MIGRATION:![alt text](image-9.png)
+# MIGRATION:![alt text](/Image/image-17.png)
 
 CLI: npm add -D dotenv
 
-SYNCHURONIZE: ![alt text](image-8.png)
+SYNCHURONIZE: ![alt text](/Image/image-18.png)
 
 LƯU Ý KHI SỬ DỤNG MIGRATION: khi đã run migration rồi thì không nên thay đổi trực tiếp trong entity nữa mà phải tạo migration mới để thay đổi schema của database, nếu thay đổi trực tiếp trong entity mà không tạo migration mới thì sẽ dẫn đến việc schema của database không đồng bộ với entity, gây lỗi khi chạy ứng dụng hoặc khi deploy ứng dụng lên production vì schema của database không đúng với entity nên sẽ không thể truy vấn dữ liệu đúng cách
+
+========================================
+
+# LIFECYCLE OF REQUEST:
+
+Lifecycle của request trong NestJS:
+![alt text](/Image/image-19.png)
+![alt text](/Image/image-20.png) - MIDDLEWARE
+![alt text](/Image/image-21.png) - GUARD
+![alt text](/Image/image-22.png) - PIPE
+![alt text](/Image/image-23.png) - INTERCEPTOR
+
+Middlware -> Guard -> Pipe -> Controller -> Service -> Interceptor -> Filter
+
+# MIDDLEWARE:
+
+- Khi 1 request được gửi đến server thì nó sẽ vô middleware trươc và được cấp cho 1 mã đinh danh (requestId) duy nhất, mã định danh này sẽ được gắn vào request và có thể được sử dụng để theo dõi request trong suốt quá trình xử lý, giúp dễ dàng debug và log hơn

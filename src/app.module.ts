@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TodosModule } from './todos/todos.module';
@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Todo } from './todos/entities/todo.entity';
 import { User } from './users/entities/user.entity';
 import { Category } from './categories/entities/category.entity';
+import { RequestMiddleware } from './common/middlewares/request-id.middleware';
 
 @Module({
   imports: [
@@ -31,4 +32,10 @@ import { Category } from './categories/entities/category.entity';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+
+// đăng ký middleware cho toàn bộ ứng dụng, middleware sẽ được áp dụng cho tất cả các route trong ứng dụng
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestMiddleware).forRoutes('*'); // áp dụng middleware cho tất cả các route trong ứng dụng
+  }
+}

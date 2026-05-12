@@ -12,3 +12,10 @@ import { Todo } from './entities/todo.entity';
   imports: [CategoriesModule, UsersModule, TypeOrmModule.forFeature([Todo])],
 })
 export class TodosModule {}
+
+// đăng ký middleware cho module này, middleware sẽ được áp dụng cho tất cả các route trong module này
+// export class TodosModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+//     consumer.apply(RequestMiddleware).forRoutes('todos'); // áp dụng middleware cho tất cả các route trong module này
+//   }
+// }
